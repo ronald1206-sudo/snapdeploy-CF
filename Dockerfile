@@ -1,21 +1,21 @@
 FROM ubuntu:22.04
 
-# 安裝 ca-certificates、wget同解壓工具
+# 1. 安裝必要工具與憑證
 RUN apt-get update && apt-get install -y ca-certificates wget tar && rm -rf /var/lib/apt/lists/*
 
-# 下載時加入 --no-check-certificate 略過憑證報錯
+# 2. 下載並解壓 mita
 RUN wget --no-check-certificate https://github.com/enfein/mieru/releases/download/v3.39.0/mita_3.39.0_linux_amd64.tar.gz && \
     tar -zxvf mita_3.39.0_linux_amd64.tar.gz && \
     chmod +x mita
 
-# 手動建立 mita 專用 socket 目錄
+# 3. 建立運行所需嘅目錄
 RUN mkdir -p /var/run/mita
 
-# 複製配置文件到根目錄
+# 4. 複製配置文件
 COPY mita.json /mita.json
 
-# 暴露服務端口
+# 5. 暴露監聽端口
 EXPOSE 7860
 
-# 啟動 mita
-CMD ["./mita", "run"]
+# 6. 使用最穩定的標準 Shell 方式啟動
+CMD ./mita run
