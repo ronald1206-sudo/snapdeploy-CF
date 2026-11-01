@@ -1,0 +1,18 @@
+{
+  "portBindings": [
+    {
+      "port": 7860,
+      "protocol": "TCP"
+    }
+  ],
+  "users": [
+    {
+      "name": "ronald",
+      "password": "YourUserPassword123"
+    }
+  ],
+  "mtu": 1400,
+  "logging": {
+    "level": "INFO"
+  }
+}
