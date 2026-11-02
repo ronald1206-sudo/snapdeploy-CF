@@ -1,0 +1,10 @@
+{
+  "server": {
+    "listen_port": 7860,
+    "log_level": "info"
+  },
+  "settings": {
+    "enabled": true,
+    "mode": "proxy"
+  }
+}
