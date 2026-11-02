@@ -1,21 +1,19 @@
-FROM ubuntu:22.04
+FROM golang:1.22-alpine
 
-# 1. 安裝必要工具與憑證
-RUN apt-get update && apt-get install -y ca-certificates wget tar && rm -rf /var/lib/apt/lists/*
+# 安裝 Git同編譯工具
+RUN apk add --no-cache git
 
-# 2. 明確下載 amd64 架構的 mita 程式
-RUN wget --no-check-certificate https://github.com/enfein/mieru/releases/download/v3.39.0/mita_3.39.0_linux_amd64.tar.gz && \
-    tar -zxvf mita_3.39.0_linux_amd64.tar.gz && \
-    chmod +x mita
+# 直接拉取官方源碼並編譯安裝 mita
+RUN go install github.com/enfein/mieru/cmd/mita@v3.39.0
 
-# 3. 建立運行所需嘅目錄
+# 建立 socket 目錄
 RUN mkdir -p /var/run/mita
 
-# 4. 複製配置文件
+# 複製配置文件
 COPY mita.json /mita.json
 
-# 5. 暴露監聽端口
+# 暴露端口
 EXPOSE 7860
 
-# 6. 啟動 mita
-CMD ./mita run
+# 啟動 mita (Go install 安裝嘅 binary 會直接喺 PATH 入面)
+CMD ["mita", "run"]
