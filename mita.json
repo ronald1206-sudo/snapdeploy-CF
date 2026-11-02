@@ -3,6 +3,9 @@
     "listen_port": 7860,
     "log_level": "info"
   },
+  "user_credentials": {
+    "user1": "mita123456"
+  },
   "settings": {
     "enabled": true,
     "mode": "proxy"
