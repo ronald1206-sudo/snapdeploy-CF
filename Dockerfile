@@ -1,24 +1,27 @@
-FROM golang:1.22-alpine
+# ---- 階段一：編譯器 ----
+FROM golang:1.22-alpine AS builder
 
-# 1. 安裝 git 同編譯工具
-RUN apk add --no-cache git
+WORKDIR /app
+COPY . .
 
-# 2. 克隆官方源碼並編譯 mita
-RUN git clone --depth 1 --branch v3.39.0 https://github.com/enfein/mieru.git /app/mieru
-WORKDIR /app/mieru/cmd/mita
-RUN go build -o /mita
+# 禁用 CGO，確保純靜態編譯，適配任何 Linux amd64 環境
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server main.go
 
-# 3. 建立專用系統用戶與群組
-RUN addgroup -S mita && adduser -S mita -G mita
+# ---- 階段二：精簡運行環境 ----
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
 
-# 4. 建立運行所需嘅 socket 目錄同 mita 配置專用目錄 /etc/mita
-RUN mkdir -p /var/run/mita && chown -R mita:mita /var/run/mita
-RUN mkdir -p /etc/mita
+# 嚴格創建 mita 依賴嘅系統路徑與目錄
+RUN mkdir -p /etc/mita /var/run/mita
 
-# 5. 複製配置文件同時放到根目錄及 /etc/mita 夾入面
-COPY mita.json /mita.json
+# 將本地的 mita.json 準確放置到 /etc/mita/ 目錄下
 COPY mita.json /etc/mita/mita.json
 
-# 6. 暴露端口並啟動
+# 複製編譯好的執行檔
+COPY --from=builder /app/server /server
+
+# 暴露平台指定端口
 EXPOSE 7860
-CMD ["/mita", "run"]
+
+# 啟動命令
+CMD ["/server"]
