@@ -1,10 +1,11 @@
 FROM alpine:latest
 
-# 1. 安裝系統依賴同下載工具
-RUN apk add --no-cache ca-certificates tzdata wget
+# 1. 安裝系統依賴、wget 與 jq（用嚟自動解析 GitHub 最新 Release 下載鏈接）
+RUN apk add --no-cache ca-certificates tzdata wget jq
 
-# 2. 直接從 GitHub 下載官方編譯好的二進制檔並放到系統路徑
-RUN wget https://github.com/enfein/mieru/releases/latest/download/mieru-linux-amd64 -O /usr/local/bin/mita && \
+# 2. 自動透過 GitHub API 抓取最新版本的下載鏈接並安裝
+RUN LATEST_URL=$(wget -qO- https://api.github.com/repos/enfein/mieru/releases/latest | jq -r '.assets[] | select(.name | contains("linux-amd64")) | .browser_download_url') && \
+    wget "$LATEST_URL" -O /usr/local/bin/mita && \
     chmod +x /usr/local/bin/mita
 
 # 3. 複製配置文件與啟動腳本
