@@ -1,21 +1,17 @@
 FROM alpine:latest
 
-# 1. 安裝系統依賴與下載解壓工具
-RUN apk add --no-cache ca-certificates tzdata wget tar
+# 1. 安裝基礎依賴
+RUN apk add --no-cache ca-certificates tzdata
 
-# 2. 下載官方最新版本的 tar.gz 壓縮包並解壓安裝到系統路徑
-RUN wget https://github.com/enfein/mieru/releases/latest/download/mieru-linux-amd64.tar.gz -O /tmp/mieru.tar.gz && \
-    tar -zxvf /tmp/mieru.tar.gz -C /tmp && \
-    mv /tmp/mieru /usr/local/bin/mita && \
-    chmod +x /usr/local/bin/mita && \
-    rm -rf /tmp/mieru.tar.gz
+# 2. 如果該倉庫支援直接複製或有對應腳本，確保目錄結構正確
+WORKDIR /app
 
-# 3. 複製配置文件與啟動腳本
-COPY mita.json /etc/mita/mita.json
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# 3. 複製倉庫中的所有檔案到容器中
+COPY . /app
+
+# 4. 賦予執行權限並設置入口
+RUN chmod +x /app/entrypoint.sh 2>/dev/null || true
 
 EXPOSE 7860
 
-# 4. 運行啟動腳本
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
