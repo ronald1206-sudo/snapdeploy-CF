@@ -1,5 +1,6 @@
-FROM node:18-alpine
+FROM node:20
 WORKDIR /app
-COPY . .
+COPY package.json index.js ./
+RUN npm install
 EXPOSE 7860
 CMD ["node", "index.js"]
