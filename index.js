@@ -1,35 +1,38 @@
 const net = require('net');
 
-const LOCAL_PORT = process.env.PORT || 7860;
-const TARGET_HOST = process.env.TARGET_HOST;
-const TARGET_PORT = parseInt(process.env.TARGET_PORT || '443', 10);
-
-if (!TARGET_HOST) {
-  console.error("Error: TARGET_HOST environment variable is not set!");
-  process.exit(1);
-}
+// 從環境變數讀取目標遠端 IP/域名與端口，如果無設定則填入預設值
+const PORT = process.env.PORT || 3000;
+const TARGET_HOST = process.env.TARGET_HOST || '請填入你遠端VPS的IP或域名';
+const TARGET_PORT = parseInt(process.env.TARGET_PORT || '443');
 
 const server = net.createServer((clientSocket) => {
-  const remoteSocket = new net.Socket();
-  
-  // 設定 TCP Keep-Alive 防止連線超時斷開
-  clientSocket.setKeepAlive(true, 30000);
-  remoteSocket.setKeepAlive(true, 30000);
+    const targetSocket = new net.Socket();
 
-  remoteSocket.connect(TARGET_PORT, TARGET_HOST, () => {
-    clientSocket.pipe(remoteSocket);
-    remoteSocket.pipe(clientSocket);
-  });
+    // 連接到遠端 VPS
+    targetSocket.connect(TARGET_PORT, TARGET_HOST, () => {
+        // 雙向管道打通
+        clientSocket.pipe(targetSocket);
+        targetSocket.pipe(clientSocket);
+    });
 
-  remoteSocket.on('error', (err) => {
-    clientSocket.end();
-  });
+    // 錯誤處理與保持連線
+    clientSocket.on('error', (err) => {
+        targetSocket.destroy();
+    });
 
-  clientSocket.on('error', (err) => {
-    remoteSocket.end();
-  });
+    targetSocket.on('error', (err) => {
+        clientSocket.destroy();
+    });
+
+    clientSocket.on('close', () => {
+        targetSocket.destroy();
+    });
+
+    targetSocket.on('close', () => {
+        clientSocket.destroy();
+    });
 });
 
-server.listen(LOCAL_PORT, () => {
-  console.log(`TCP Port Forwarder running on port ${LOCAL_PORT}, forwarding -> ${TARGET_HOST}:${TARGET_PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`TCP Forwarder running on port ${PORT}, forwarding to ${TARGET_HOST}:${TARGET_PORT}`);
 });
